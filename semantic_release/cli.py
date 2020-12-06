@@ -34,6 +34,7 @@ from .vcs_helpers import (
     checkout,
     commit_new_version,
     get_current_head_hash,
+    get_date_from_tag,
     get_repository_owner_and_name,
     push_new_version,
     tag_new_version,
@@ -163,7 +164,7 @@ def bump_version(new_version, level_bump):
     logger.info(f"Bumping with a {level_bump} version to {new_version}")
 
 
-def changelog(*, unreleased=False, noop=False, post=False, **kwargs):
+def changelog(*, unreleased=False, noop=False, post=False, regenerate=False, **kwargs):
     """
     Generate the changelog since the last release.
 
@@ -178,6 +179,7 @@ def changelog(*, unreleased=False, noop=False, post=False, **kwargs):
         )
 
     previous_version = get_previous_version(current_version)
+    owner, name = get_repository_owner_and_name()
 
     # Generate the changelog
     if unreleased:
@@ -185,9 +187,39 @@ def changelog(*, unreleased=False, noop=False, post=False, **kwargs):
     else:
         log = generate_changelog(previous_version, current_version)
 
-    owner, name = get_repository_owner_and_name()
-    # print is used to keep the changelog on stdout, separate from log messages
-    print(markdown_changelog(owner, name, current_version, log, header=False))
+    if regenerate:
+        changelog_file = config.get("changelog_file")
+        if os.path.exists(changelog_file):
+            logger.warning(
+                "Regenerating: will remove existing changelog %s", changelog_file
+            )
+            os.remove(changelog_file)
+        logs = []
+
+        log = generate_changelog(previous_version, current_version)
+        date = get_date_from_tag(f"v{current_version}")
+        changelog_md = markdown_changelog(
+            owner, name, current_version, log, header=False
+        )
+        logs.append((current_version, date, changelog_md))
+        # Walk backwards until we get to the first version
+        while current_version:
+            if current_version == "2.0.0":
+                break
+            current_version = previous_version
+            previous_version = get_previous_version(current_version)
+            inner_date = get_date_from_tag(f"v{current_version}")
+            log = generate_changelog(previous_version, current_version)
+            changelog_md = markdown_changelog(
+                owner, name, current_version, log, header=False
+            )
+
+            logs.append((current_version, inner_date, changelog_md))
+        for item in reversed(logs):
+            update_changelog_file(item[0], item[1], item[2])
+    else:
+        # print is used to keep the changelog on stdout, separate from log messages
+        print(markdown_changelog(owner, name, current_version, log, header=False))
 
     # Post changelog to HVCS if enabled
     if not noop and post:
@@ -366,6 +398,11 @@ def cmd_publish(**kwargs):
 @click.option(
     "--unreleased/--released",
     help="Decides whether to show the released or unreleased changelog.",
+)
+@click.option(
+    "--regenerate/--no-regenerate",
+    default=False,
+    help="If set, regenerate the entire changelog.",
 )
 def cmd_changelog(**kwargs):
     try:

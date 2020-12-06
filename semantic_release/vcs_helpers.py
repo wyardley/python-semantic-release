@@ -3,7 +3,7 @@
 import logging
 import os
 import re
-from datetime import date
+from datetime import date, datetime
 from functools import wraps
 from pathlib import Path, PurePath
 from typing import Optional, Tuple
@@ -77,6 +77,21 @@ def get_last_version(skip_tags=None) -> Optional[str]:
             return i.name[1:]  # Strip off 'v'
 
     return None
+
+
+@check_repo
+@LoggedFunction(logger)
+def get_date_from_tag(tag_name=str) -> str:
+    """
+    Return the date for a given tag
+
+    :return: A string containing the date for a tag.
+    """
+    for i in repo.tags:
+        if i.name == tag_name:
+            if i.tag:
+                return datetime.fromtimestamp(i.tag.tagged_date).strftime("%Y-%m-%d")
+    return "0000-00-00"
 
 
 @check_repo
@@ -157,7 +172,7 @@ def commit_new_version(version: str):
 
 @check_repo
 @LoggedFunction(logger)
-def update_changelog_file(version: str, content_to_add: str):
+def update_changelog_file(version: str, date: str, content_to_add: str):
     """
     Update changelog file with changelog for the release.
 
@@ -180,13 +195,14 @@ def update_changelog_file(version: str, content_to_add: str):
         )
         return
 
+    date_stamp = date if date else date.today().strftime("%Y-%m-%d")
     updated_content = original_content.replace(
         changelog_placeholder,
         "\n".join(
             [
                 changelog_placeholder,
                 "",
-                f"## v{version} ({date.today():%Y-%m-%d})",
+                f"## v{version} ({date_stamp})",
                 content_to_add,
             ]
         ),

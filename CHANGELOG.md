@@ -2,6 +2,20 @@
 
 <!--next-version-placeholder-->
 
+## v7.9.0 (2020-12-20)
+### Feature
+* **hvcs:** Add hvcs_domain config option ([`ab3061a`](https://github.com/wyardley/python-semantic-release/commit/ab3061ae93c49d71afca043b67b361e2eb2919e6))
+
+### Fix
+* **history:** Require semver >= 2.10 ([`5087e54`](https://github.com/wyardley/python-semantic-release/commit/5087e549399648cf2e23339a037b33ca8b62d954))
+
+## v7.9.0 (2020-12-20)
+### Feature
+* **hvcs:** Add hvcs_domain config option ([`ab3061a`](https://github.com/wyardley/python-semantic-release/commit/ab3061ae93c49d71afca043b67b361e2eb2919e6))
+
+### Fix
+* **history:** Require semver >= 2.10 ([`5087e54`](https://github.com/wyardley/python-semantic-release/commit/5087e549399648cf2e23339a037b33ca8b62d954))
+
 ## v7.8.2 (2020-12-19)
 ### Fix
 * **cli:** Skip remove_dist where not needed ([`04817d4`](https://github.com/relekang/python-semantic-release/commit/04817d4ecfc693195e28c80455bfbb127485f36b))
